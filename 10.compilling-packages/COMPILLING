@@ -1,5 +1,0 @@
-## Steps to compile the test package
-
-1. source .project_bash-profile
-2. go install test
-3. go build test

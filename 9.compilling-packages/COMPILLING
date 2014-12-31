@@ -1,0 +1,10 @@
+## Steps to compile the test package
+
+1. source .project_bash-profile
+2. go install testPkg
+3. testPkg
+
+## for myLibrary
+1. go build myLibrary
+2. go install testPkg
+3. testPkg
