@@ -21,6 +21,10 @@ func NewPlayer(name string, life int16, strength int16) *player {
 	return newPlayer
 }
 
+func (this *player) SayName() {
+	fmt.Println(this.name)
+}
+
 func init() {
 	fmt.Println("Loading player package!")
 }

@@ -10,4 +10,5 @@ func main() {
 	fmt.Println()
 	mainPlayer := player.NewPlayer("John", 100, 10)
 	fmt.Println(mainPlayer)
+	mainPlayer.SayName()
 }
