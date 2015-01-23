@@ -1,0 +1,9 @@
+export GODIR=/usr/local
+export GOROOT=$GODIR/go
+export GOOS=darwin
+export GOARCH=amd64
+export GOPATH=$HOME/projects/golang-study
+export PATH=$GOBIN:$PATH
+export GOPATH=$HOME/projects/golang-study/18.panic
+export GOBIN=$GOPATH/bin
+export PATH=$PATH:$GOBIN
