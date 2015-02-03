@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"runtime"
+	"crypto/md5"
 )
 
 func main() {
