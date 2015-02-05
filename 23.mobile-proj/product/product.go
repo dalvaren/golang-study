@@ -1,22 +1,37 @@
 package product
 
 import (
-	"errors"
+	"appengine"
+	"appengine/datastore"
 )
 
 type Product struct {
-	Id string
-	AccountId int
+	PaymentKey *datastore.Key
+	ContentKeys []*datastore.Key
 	Value float64
 }
 
-func NewProduct (productId string, accountId int) (*Product, error) {
-	if len(productId) == 0 {
-		return nil, errors.New("Empty App Id")
-	}
+func NewProduct () (*Product, error) {
 	var createdProduct = new(Product)
-	createdProduct.Id = productId
-	createdProduct.AccountId = accountId	
 	createdProduct.Value = 0.0
 	return createdProduct, nil
+}
+
+func (this *Product) Save(context appengine.Context) (*datastore.Key, error) {
+	key, err := datastore.Put(context, datastore.NewIncompleteKey(context, "Product", nil), this)
+    if err != nil {
+        return nil, err
+    }
+    
+	return key, nil
+}
+
+func Load(context appengine.Context, encodedProductKey string) (*Product, error) {
+	productKey, _ := datastore.DecodeKey(encodedProductKey)
+	var loadedProduct = new(Product)
+	err := datastore.Get(context, productKey, loadedProduct);
+	if err != nil {
+		return nil, err
+	}
+	return loadedProduct, nil
 }

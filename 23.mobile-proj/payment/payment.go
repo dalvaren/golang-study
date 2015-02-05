@@ -2,18 +2,27 @@ package payment
 
 import (
 	"time"
+	"appengine"
+	"appengine/datastore"
 )
 
 type Payment struct {
-	ProductId string
 	CreatedAt time.Time
 	ValidUntil time.Time
 }
 
-func NewPayment (productId string) (*Payment, error) {
+func NewPayment () (*Payment, error) {
 	var createdPayment = new(Payment)
-	createdPayment.ProductId = productId
 	createdPayment.CreatedAt = time.Now()
 	createdPayment.ValidUntil = time.Now()
 	return createdPayment, nil
+}
+
+func (this *Payment) Save(context appengine.Context) (*datastore.Key, error) {
+	key, err := datastore.Put(context, datastore.NewIncompleteKey(context, "Payment", nil), this)
+    if err != nil {
+        return nil, err
+    }
+    
+	return key, nil
 }

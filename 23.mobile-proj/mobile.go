@@ -11,14 +11,21 @@ import (
 
 	"appengine"
 	"appengine/datastore"
+
+	"github.com/gorilla/mux"
 )
 
 func init() {
-	http.HandleFunc("/", handleMain)
-	http.HandleFunc("/test", handleTwo)
-	http.HandleFunc("/customer", handleListCustomers)
-	http.HandleFunc("/customer/add", handleAddNewCustomer)
-	http.HandleFunc("/delete", handleRemoveAll)
+	var router = mux.NewRouter()
+	router.HandleFunc("/", handleMain).Methods("GET")
+	router.HandleFunc("/customer", handleListCustomers).Methods("GET")
+	router.HandleFunc("/customer/add", handleAddNewCustomer).Methods("GET")
+	router.HandleFunc("/customer/{key}", handleListSpecificCustomer).Methods("GET")
+	router.HandleFunc("/product/{key}", handleListSpecificProduct).Methods("GET")
+	router.HandleFunc("/product/content/add", handleAddContent).Methods("GET")
+	router.HandleFunc("/product/content/{key}", handleContent).Methods("GET")
+	router.HandleFunc("/delete", handleRemoveAll).Methods("GET")
+	http.Handle("/", router)
 }
 
 func handleMain(w http.ResponseWriter, r *http.Request) {
@@ -33,10 +40,6 @@ func handleMain(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<html><body>Hello, World! Dude! 세상아 안녕!</body></html>")
 }
 
-func handleTwo(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "<html><body>lalalão!</body></html>")
-}
-
 func handleListCustomers(w http.ResponseWriter, r *http.Request) {
 	context := appengine.NewContext(r)
 	query := datastore.NewQuery("Account")
@@ -47,23 +50,60 @@ func handleListCustomers(w http.ResponseWriter, r *http.Request) {
     		fmt.Fprintf(w, "<div>%d. ---</div>", index)
     		fmt.Fprintf(w, "<div>%+v</div>", customer)
 
-    		queryProducts := datastore.NewQuery("Product").Filter("AccountId =", customer.Id)
-    		var products []product.Product
-    		queryProducts.GetAll(context, &products);
-    		for _, product := range products {
-    			fmt.Fprintf(w, "<div>%+v</div>", product)
-
-    			queryPayments := datastore.NewQuery("Payment").Filter("ProductId =", product.Id)
-	    		var payments []payment.Payment
-	    		queryPayments.GetAll(context, &payments);
-	    		for _, payment := range payments {
-	    			fmt.Fprintf(w, "<div>%+v</div>", payment)
+    		for _, productKey := range customer.ProductKeys {
+    			var product product.Product
+    			err := datastore.Get(context, productKey, &product);
+	    		if err != nil {
+	    			fmt.Fprintf(w, "<div>err: %+v</div>", err)
 	    		}
+    			fmt.Fprintf(w, "<div>product: %+v</div>", product)
+    			encodedKey := productKey.Encode();
+    			fmt.Fprintf(w, "<div>encodedKey: %+v</div>", encodedKey)
 
+    			var payment payment.Payment
+    			err = datastore.Get(context, product.PaymentKey, &payment);
+	    		if err != nil {
+	    			fmt.Fprintf(w, "<div>err: %+v</div>", err)
+	    		}
+    			fmt.Fprintf(w, "<div>payment: %+v</div>", payment)
     		}
 	    }
     }
     fmt.Fprint(w, "<div>Done!</div>")
+}
+
+// http://localhost:8080/product/agpkZXZ-bW9iaWxlchQLEgdQcm9kdWN0GICAgICAwL8IDA
+func handleListSpecificProduct(w http.ResponseWriter, r *http.Request) {
+	context := appengine.NewContext(r)
+
+	vars := mux.Vars(r)
+	key := vars["key"]
+	if key == "" {
+		http.Error(w, "key param error", http.StatusInternalServerError)
+	}
+
+	product, err := product.Load(context, key)
+	if err != nil {
+		fmt.Fprintf(w, "<div>err: %+v</div>", err)
+	}
+	fmt.Fprintf(w, "<div>product: %+v</div>", product)
+}
+
+// http://localhost:8080/customer/agpkZXZ-bW9iaWxlchQLEgdBY2NvdW50GICAgICA4JcLDA
+func handleListSpecificCustomer(w http.ResponseWriter, r *http.Request) {
+	context := appengine.NewContext(r)
+
+	vars := mux.Vars(r)
+	key := vars["key"]
+	if key == "" {
+		http.Error(w, "key param error", http.StatusInternalServerError)
+	}
+
+	account, err := account.Load(context, key)
+	if err != nil {
+		fmt.Fprintf(w, "<div>err: %+v</div>", err)
+	}
+	fmt.Fprintf(w, "<div>product: %+v</div>", account)
 }
 
 func handleRemoveAll(w http.ResponseWriter, r *http.Request) {
@@ -92,34 +132,12 @@ func handleRemoveAll(w http.ResponseWriter, r *http.Request) {
 func handleAddNewCustomer(w http.ResponseWriter, r *http.Request) {
 	context := appengine.NewContext(r)
 
-	customer, product, payment, err := account.CreateCustomer(context, "John Doe", "danielalvarengacampos@gmail.com")
+	customer, product, payment, err := account.CreateAccount(context, "John Doe", "danielalvarengacampos@gmail.com")
 	if err != nil {
-		fmt.Fprint(w, "<html><body>Error Creating Customer!</body></html>")
-	}   
-
-    if err := SaveToDatastore(context, "Account", customer); err != nil {
-    	http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    if err := SaveToDatastore(context, "Product", product); err != nil {
-    	http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    if err := SaveToDatastore(context, "Payment", payment); err != nil {
-    	http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+		fmt.Fprintf(w, "<html><body>Error Creating Customer! %+v</body></html>", err)
+	}
 
 	fmt.Fprintf(w, "<div>Customer created: %+v</div>", customer)
 	fmt.Fprintf(w, "<div>Product created: %+v</div>", product)
 	fmt.Fprintf(w, "<div>Payment created: %+v</div>", payment)
-}
-
-func SaveToDatastore(context appengine.Context, key string, entity interface{}) error {
-	_, err := datastore.Put(context, datastore.NewIncompleteKey(context, key, nil), entity)
-    if err != nil {
-        return err
-    }
-
-	return nil
 }
