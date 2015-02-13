@@ -26,3 +26,14 @@ func (this *Payment) Save(context appengine.Context) (*datastore.Key, error) {
     
 	return key, nil
 }
+
+func Load(context appengine.Context, key *datastore.Key) (*Payment, error) {
+	var loadedEntity = new(Payment)
+	err := datastore.Get(context, key, loadedEntity);
+	if err != nil {
+		return nil, err
+	}
+	return loadedEntity, nil
+}
+
+

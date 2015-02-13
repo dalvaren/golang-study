@@ -10,6 +10,7 @@ type Content struct {
 	Name string
 	JsonData string
 	Version int
+	ProductKey *datastore.Key
 }
 
 func NewContent (name string, jsonData string) (*Content, error) {
@@ -30,4 +31,14 @@ func (this *Content) Save(context appengine.Context) (*datastore.Key, error) {
     }
 
 	return key, nil
+}
+
+func Load(context appengine.Context, encodedKey string) (*Content, error) {
+	key, _ := datastore.DecodeKey(encodedKey)
+	var loadedEntity = new(Content)
+	err := datastore.Get(context, key, loadedEntity);
+	if err != nil {
+		return nil, err
+	}
+	return loadedEntity, nil
 }

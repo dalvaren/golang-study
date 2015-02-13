@@ -50,7 +50,22 @@ func Load(context appengine.Context, encodedKey string) (*Account, error) {
 	return loadedEntity, nil
 }
 
+func CheckExistentAccount(context appengine.Context, email string) bool {
+	queryAccount := datastore.NewQuery("Account").
+		Filter("Email =", email)
+	var accounts []Account
+	_, _ = queryAccount.GetAll(context, &accounts)
+	if len(accounts) > 0 {
+		return true
+	}
+	return false
+}
+
 func CreateAccount(context appengine.Context ,name string, email string) (*Account, *product.Product, *payment.Payment, error){
+
+	if existentAccount := CheckExistentAccount(context, email); existentAccount == true {
+		return nil, nil, nil, errors.New("An user with this email already exists")
+	}
 
 	payment, err := payment.NewPayment()
 	if err != nil { return nil, nil, nil, err }

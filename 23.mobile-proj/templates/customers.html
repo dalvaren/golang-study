@@ -1,0 +1,23 @@
+<h2>{{.Title}}</h2>
+
+<table>
+	<thead>
+		<td>Name</td>
+		<td>Email</td>
+		<td>Created At</td>
+		<td></td>
+	</thead>
+	<tbody>
+		{{ range $customer := .List}}
+		<tr>
+			<td>{{$customer.Name}}</td>
+			<td>{{$customer.Email}}</td>
+			<td>{{$customer.CreatedAt}}</td>
+			<td><a href="/customer/edit/{{$customer.Key}}">edit</a></td>
+		</tr>
+		{{ end }}
+	</tbody>
+</table>
+<br>
+<br>
+<a href="/customer/new">Add a new customer</a>

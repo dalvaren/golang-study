@@ -1,0 +1,24 @@
+<form action="/customer/add" method="post">
+	<input type="text" name="name" value="{{.Name}}" placeholder="Name..." /><br>
+	<input type="text" name="email" value="{{.Email}}" placeholder="Email..." /><br>
+	<input type="hidden" name="key" value="{{.Key}}" /><br>
+	<input type="submit" value="Save" />
+</form>
+
+<div>
+	<h2>Products list</h2>
+	<table>
+		<thead>
+			<td>Product Key</td>
+			<td></td>
+		</thead>
+		<tbody>
+			{{ range $product := .Products}}
+			<tr>
+				<td>{{$product}}</td>
+				<td><a href="/product/{{$product}}">edit</a></td>
+			</tr>
+			{{ end }}
+		</tbody>
+	</table>
+</div>
